@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, FillGradient } from 'pixi.js';
+import { Application, Container, Graphics, FillGradient, BlurFilter } from 'pixi.js';
 import type { GameContext, GameSystem } from './types.ts';
 import { UFO_RX, UFO_RY } from './constants.ts';
 
@@ -6,72 +6,97 @@ export class Ufo implements GameSystem {
   private container: Container = new Container();
   private gfx: Graphics = new Graphics();
 
+  // Glow layer: BlurFilter + additive blend（UFO本体グロー・エンジングロー）
+  private glowContainer: Container = new Container();
+  private glowGfx: Graphics = new Graphics();
+  private blurFilter: BlurFilter = new BlurFilter({ strength: 18, quality: 4 });
+
+  // Rim lights layer: additive blend
+  private rimContainer: Container = new Container();
+  private rimGfx: Graphics = new Graphics();
+
   init(app: Application): void {
+    // 1. グローレイヤー（最背面）
+    this.glowContainer.addChild(this.glowGfx);
+    this.glowContainer.filters = [this.blurFilter];
+    this.glowContainer.blendMode = 'add';
+    app.stage.addChild(this.glowContainer);
+
+    // 2. UFO本体
     this.container.addChild(this.gfx);
     app.stage.addChild(this.container);
+
+    // 3. リムライトレイヤー（最前面）
+    this.rimContainer.addChild(this.rimGfx);
+    this.rimContainer.blendMode = 'add';
+    app.stage.addChild(this.rimContainer);
   }
 
   update(ctx: GameContext): void {
     const { ufo, boost } = ctx;
 
-    this.container.x = ufo.x;
-    this.container.y = ufo.y + Math.sin(ufo.bob) * 2.8 + ufo.shake;
+    const posX = ufo.x;
+    const posY = ufo.y + Math.sin(ufo.bob) * 2.8 + ufo.shake;
+
+    this.container.x = posX;
+    this.container.y = posY;
     this.container.rotation = ufo.tilt;
 
+    // グローレイヤーとリムレイヤーも同一トランスフォームで追従
+    this.glowContainer.x = posX;
+    this.glowContainer.y = posY;
+    this.glowContainer.rotation = ufo.tilt;
+
+    this.rimContainer.x = posX;
+    this.rimContainer.y = posY;
+    this.rimContainer.rotation = ufo.tilt;
+
     const gw = 0.72 + 0.28 * Math.sin(ufo.glowPhase);
+
+    // BlurFilter の strength を glowPhase 連動で変化させる
+    this.blurFilter.strength = 14 + 8 * gw;
+
     this.drawAll(gw, ufo.rimPhase, boost.isBoosting);
   }
 
   private drawAll(gw: number, rimPhase: number, boosting: boolean): void {
     this.gfx.clear();
+    this.glowGfx.clear();
+    this.rimGfx.clear();
 
-    // 1. 外側グロー (同心楕円で放射グラデーション近似)
-    this.drawOuterGlow(gw);
+    // 1. グローレイヤー（BlurFilter適用済みコンテナに描画）
+    this.drawGlowLayer(gw, boosting);
 
-    // 2. エンジン下部グロー
-    this.drawEngineGlow(boosting, gw);
-
-    // 3. メインディスク (線形グラデーション)
+    // 2. メインディスク (線形グラデーション)
     this.drawMainDisk(gw);
 
-    // 4. パネルアークライン
+    // 3. パネルアークライン
     this.drawPanelArcs();
 
-    // 5. リムライト
+    // 4. リムライト（additive blend コンテナに描画）
     this.drawRimLights(rimPhase, boosting);
 
-    // 6. ドーム
+    // 5. ドーム
     this.drawDome(gw);
 
-    // 7. 中央下部エミッター
+    // 6. 中央下部エミッター
     this.drawCenterEmitter(gw);
   }
 
-  // 1. 外側グロー: 同心楕円を段階的透明度で重ねる
-  private drawOuterGlow(gw: number): void {
-    const steps = 8;
-    const rx = 95, ry = 60;
-    for (let i = steps; i >= 1; i--) {
-      const ratio = i / steps;
-      const alpha = (1 - ratio) * 0.18 * gw;
-      this.gfx.ellipse(0, 0, rx * ratio, ry * ratio)
-        .fill({ color: 0x00e5ff, alpha });
-    }
+  // 1. グローレイヤー: UFO本体グロー + エンジン下部グロー
+  //    （旧 drawOuterGlow + drawEngineGlow を統合）
+  private drawGlowLayer(gw: number, boosting: boolean): void {
+    // UFO本体シアングロー（BlurFilter が広げるので単純な楕円1つでOK）
+    this.glowGfx.ellipse(0, 0, UFO_RX * 0.9, UFO_RY * 0.9)
+      .fill({ color: 0x00e5ff, alpha: 0.55 * gw });
+
+    // エンジン下部グロー
+    const engColor = boosting ? 0xff6600 : 0x0088ff;
+    this.glowGfx.ellipse(0, UFO_RY + 4, 22, 15)
+      .fill({ color: engColor, alpha: 0.7 * gw });
   }
 
-  // 2. エンジン下部グロー
-  private drawEngineGlow(boosting: boolean, gw: number): void {
-    const color = boosting ? 0xff6600 : 0x0088ff;
-    const steps = 5;
-    for (let i = steps; i >= 1; i--) {
-      const ratio = i / steps;
-      const alpha = (1 - ratio) * 0.45 * gw;
-      this.gfx.ellipse(0, UFO_RY + 4, 30 * ratio, 22 * ratio)
-        .fill({ color, alpha });
-    }
-  }
-
-  // 3. メインディスク (FillGradient 線形グラデーション)
+  // 2. メインディスク (FillGradient 線形グラデーション)
   private drawMainDisk(gw: number): void {
     const grad = new FillGradient({ type: 'linear', start: { x: 0, y: -UFO_RY }, end: { x: 0, y: UFO_RY } });
     grad.addColorStop(0, 0x4a5f90);
@@ -86,7 +111,7 @@ export class Ufo implements GameSystem {
       .stroke({ width: 1.2, color: 0x00e5ff, alpha: 0.4 + 0.4 * gw });
   }
 
-  // 4. パネルアークライン (3本の装飾的ベジエ曲線)
+  // 3. パネルアークライン (3本の装飾的ベジエ曲線)
   private drawPanelArcs(): void {
     const rx = UFO_RX, ry = UFO_RY;
     const arcs = [
@@ -102,7 +127,7 @@ export class Ufo implements GameSystem {
     }
   }
 
-  // 5. リムライト (12個、rimPhase連動)
+  // 4. リムライト (12個、rimPhase連動) - rimGfx に描画（additive blend）
   private drawRimLights(rimPhase: number, boosting: boolean): void {
     const count = 12;
     const rx = UFO_RX, ry = UFO_RY;
@@ -117,14 +142,14 @@ export class Ufo implements GameSystem {
 
       if (bright > 0.55) {
         // グロー効果: 外側のソフト円
-        this.gfx.circle(lx, ly, 4.5).fill({ color, alpha: 0.3 });
-        this.gfx.circle(lx, ly, 2.5).fill({ color, alpha: 0.7 });
+        this.rimGfx.circle(lx, ly, 4.5).fill({ color, alpha: 0.3 });
+        this.rimGfx.circle(lx, ly, 2.5).fill({ color, alpha: 0.7 });
       }
-      this.gfx.circle(lx, ly, 1.8).fill({ color, alpha: 1.0 });
+      this.rimGfx.circle(lx, ly, 1.8).fill({ color, alpha: 1.0 });
     }
   }
 
-  // 6. ドーム (上半球楕円、放射グラデーション近似)
+  // 5. ドーム (上半球楕円、放射グラデーション近似)
   private drawDome(gw: number): void {
     const domeRX = UFO_RX * 0.48;
     const domeRY = UFO_RY * 2.2;
@@ -135,7 +160,6 @@ export class Ufo implements GameSystem {
       const ratio = i / steps;
       const baseColor = lerpColor(0x1a3a6a, 0x6aacee, 1 - ratio);
       const alpha = 0.55 + 0.3 * (1 - ratio);
-      // 上半球のみ描画（clipRect の代わりに y オフセットで調整）
       this.gfx.ellipse(0, -UFO_RY * 0.3, domeRX * ratio, domeRY * ratio * 0.5)
         .fill({ color: baseColor, alpha });
     }
@@ -153,7 +177,7 @@ export class Ufo implements GameSystem {
       .stroke({ width: 1.0, color: 0x00e5ff, alpha: 0.3 + 0.3 * gw });
   }
 
-  // 7. 中央下部エミッター (放射グラデーション近似)
+  // 6. 中央下部エミッター (放射グラデーション近似)
   private drawCenterEmitter(gw: number): void {
     const radius = 15;
     const steps = 5;

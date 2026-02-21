@@ -20,6 +20,10 @@ export class SoundManager implements GameSystem {
   private ambientOscs: OscillatorNode[] = [];
   private ambientGain: GainNode | null = null;
 
+  // LFO for ambient tremolo
+  private lfo: OscillatorNode | null = null;
+  private lfoGain: GainNode | null = null;
+
   private started = false;
   private prevBoosting = false;
 
@@ -84,6 +88,15 @@ export class SoundManager implements GameSystem {
       osc.connect(this.ambientGain);
       this.ambientOscs.push(osc);
     }
+
+    // --- LFO for ambient tremolo (ブースト中にゲイン変調) ---
+    this.lfo = ctx.createOscillator();
+    this.lfo.type = 'sine';
+    this.lfo.frequency.value = 0.8;
+    this.lfoGain = ctx.createGain();
+    this.lfoGain.gain.value = 0;
+    this.lfo.connect(this.lfoGain);
+    this.lfoGain.connect(this.ambientGain.gain);
   }
 
   update(ctx: GameContext): void {
@@ -105,18 +118,37 @@ export class SoundManager implements GameSystem {
       this.engineFilter.frequency.value = 400 + (speed / MAX_SPEED) * 400;
     }
 
-    // Boost jet - 状態変化でフェードイン/アウト
+    // Boost jet - 状態変化でフェードイン/アウト + ピッチスイープ
     const nowBoosting = ctx.boost.isBoosting;
-    if (nowBoosting !== this.prevBoosting && this.jetGain && this.audioCtx) {
+    if (nowBoosting !== this.prevBoosting && this.jetGain && this.jetOsc && this.audioCtx) {
       const t = this.audioCtx.currentTime;
       this.jetGain.gain.cancelScheduledValues(t);
       this.jetGain.gain.setValueAtTime(this.jetGain.gain.value, t);
       if (nowBoosting) {
         this.jetGain.gain.linearRampToValueAtTime(0.10, t + 0.15);
+        // ブースト再開: 周波数を50Hzにリセット
+        this.jetOsc.frequency.cancelScheduledValues(t);
+        this.jetOsc.frequency.setValueAtTime(50, t);
       } else {
         this.jetGain.gain.linearRampToValueAtTime(0, t + 0.3);
+        // ブースト終了: 50Hz→22Hz へピッチ下降スイープ
+        this.jetOsc.frequency.setValueAtTime(50, t);
+        this.jetOsc.frequency.exponentialRampToValueAtTime(22, t + 0.5);
       }
       this.prevBoosting = nowBoosting;
+    }
+
+    // Ambient BGM - 高速時デチューン + ブースト時LFOトレモロ
+    if (this.ambientOscs.length > 0 && this.lfoGain && this.audioCtx) {
+      const t = this.audioCtx.currentTime;
+      const speedRatio = Math.min(1, speed / MAX_SPEED);
+      const detuneAmt = speedRatio > 0.7 ? (speedRatio - 0.7) / 0.3 * 12 : 0;
+      this.ambientOscs.forEach((osc, i) => {
+        const sign = i % 2 === 0 ? 1 : -1;
+        osc.detune.setTargetAtTime(sign * detuneAmt, t, 0.5);
+      });
+      const targetLfo = ctx.boost.isBoosting ? 0.015 : 0;
+      this.lfoGain.gain.setTargetAtTime(targetLfo, t, 0.2);
     }
   }
 
@@ -129,6 +161,7 @@ export class SoundManager implements GameSystem {
     this.jetOsc?.start();
     this.noiseSource?.start();
     for (const osc of this.ambientOscs) osc.start();
+    this.lfo?.start();
   }
 
   private makeDistortionCurve(amount: number): Float32Array<ArrayBuffer> {

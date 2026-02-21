@@ -122,8 +122,19 @@ async function main() {
 
     // --- Screen wrap ---
     const margin = 60;
+    const prevX = ufo.x;
+    const prevY = ufo.y;
     ufo.x = ((ufo.x + margin) % (width + margin * 2) + (width + margin * 2)) % (width + margin * 2) - margin;
     ufo.y = ((ufo.y + margin) % (height + margin * 2) + (height + margin * 2)) % (height + margin * 2) - margin;
+
+    // --- Wrap edge detection ---
+    let wrapEdge: 'left' | 'right' | 'top' | 'bottom' | null = null;
+    if (Math.abs(ufo.x - prevX) > width / 2) {
+      wrapEdge = ufo.x < prevX ? 'right' : 'left';
+    }
+    if (Math.abs(ufo.y - prevY) > height / 2) {
+      wrapEdge = ufo.y < prevY ? 'bottom' : 'top';
+    }
 
     // --- UFO visual state ---
     const targetTilt = (ufo.vx / MAX_SPEED) * 0.45;
@@ -146,11 +157,28 @@ async function main() {
       input: inputState,
       dt,
       anyKeyPressed: input.anyKeyPressed,
+      wrapEdge,
     };
 
     // --- Update all systems ---
     for (const sys of systems) {
       sys.update(ctx);
+    }
+
+    // --- Camera shake ---
+    const currentSpeed = Math.hypot(ufo.vx, ufo.vy);
+    let shakeIntensity: number;
+    if (boost.isBoosting) {
+      shakeIntensity = 2.5;
+    } else {
+      shakeIntensity = Math.max(0, (currentSpeed - MAX_SPEED * 0.8) / (MAX_SPEED * 0.2)) * 1.5;
+    }
+    if (shakeIntensity > 0) {
+      app.stage.x = (Math.random() - 0.5) * 2 * shakeIntensity;
+      app.stage.y = (Math.random() - 0.5) * 2 * shakeIntensity;
+    } else {
+      app.stage.x *= 0.85;
+      app.stage.y *= 0.85;
     }
   });
 }
