@@ -5,36 +5,12 @@ import {
   ACCEL, MAX_SPEED, BOOST_MULT, FRICTION,
   BOOST_DRAIN, BOOST_REGEN,
 } from './constants.js';
-
-// --- Lazy imports for modules created by other workers ---
-// These will be available after Worker2/3/4 complete their tasks.
-// Using dynamic imports so TypeScript does not error on missing files at dev time.
-type AnySystem = GameSystem;
-
-async function loadSystems(): Promise<AnySystem[]> {
-  const systems: AnySystem[] = [];
-  const modules = [
-    () => import('./Ufo.js'),
-    () => import('./Trail.js'),
-    // @ts-ignore - created by Worker3
-    () => import('./Environment.js'),
-    // @ts-ignore - created by Worker3
-    () => import('./Particles.js'),
-    // @ts-ignore - created by Worker4
-    () => import('./Sound.js'),
-    // @ts-ignore - created by Worker4
-    () => import('./Hud.js'),
-  ];
-  for (const loader of modules) {
-    try {
-      const mod = await loader() as { default?: AnySystem };
-      if (mod.default) systems.push(mod.default);
-    } catch {
-      // Module not yet created by other workers — skip
-    }
-  }
-  return systems;
-}
+import { Environment } from './Environment.js';
+import { Particles } from './Particles.js';
+import { Ufo } from './Ufo.js';
+import { Trail } from './Trail.js';
+import { SoundManager } from './Sound.js';
+import { Hud } from './Hud.js';
 
 async function main() {
   const app = new Application();
@@ -68,7 +44,15 @@ async function main() {
     flashAlpha: 0,
   };
 
-  const systems = await loadSystems();
+  // Systems in render order: environment (back) → trail → particles → ufo → sound → hud (front)
+  const systems: GameSystem[] = [
+    new Environment(),
+    new Trail(),
+    new Particles(),
+    new Ufo(),
+    new SoundManager(),
+    new Hud(),
+  ];
 
   for (const sys of systems) {
     sys.init(app);
