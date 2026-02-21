@@ -34,6 +34,7 @@ export interface GameContext {
   input: InputState;
   dt: number;
   anyKeyPressed: boolean;
+  wrapEdge?: 'left' | 'right' | 'top' | 'bottom' | null;
 }
 
 export interface GameSystem {

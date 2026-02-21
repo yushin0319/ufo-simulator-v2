@@ -14,7 +14,21 @@ interface Star {
   y: number;
   twk: number;   // twinkle phase
   tsp: number;   // twinkle speed (0.6 - 2.6)
+  color: number; // star color temperature
 }
+
+interface ShootingStar {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  len: number;
+}
+
+const STAR_COLORS = [0xffccaa, 0xffddcc, 0xffffff, 0xeef0ff, 0xaabbff];
+const STAR_WEIGHTS = [0.08, 0.12, 0.5, 0.18, 0.12];
 
 const LAYERS: StarLayer[] = [
   { n: 260, spd: 0.055, sz: 0.85, alpha: 0.35 },
@@ -29,8 +43,9 @@ export class Environment implements GameSystem {
   private speedGfx!: Graphics;
 
   private stars: Star[][] = LAYERS.map(l =>
-    Array.from({ length: l.n }, () => ({ x: 0, y: 0, twk: 0, tsp: 1 }))
+    Array.from({ length: l.n }, () => ({ x: 0, y: 0, twk: 0, tsp: 1, color: 0xffffff }))
   );
+  private shootingStars: ShootingStar[] = [];
 
   private width = 800;
   private height = 600;
@@ -70,6 +85,7 @@ export class Environment implements GameSystem {
           y: Math.random() * H,
           twk: Math.random() * Math.PI * 2,
           tsp: 0.6 + Math.random() * 2.0,
+          color: weightedChoice(STAR_COLORS, STAR_WEIGHTS),
         };
       }
     }
@@ -110,11 +126,14 @@ export class Environment implements GameSystem {
         star.twk += star.tsp * dt;
         star.x -= ufo.vx * dt * layer.spd;
         star.x = ((star.x % W) + W) % W;
+        star.y -= ufo.vy * dt * layer.spd;
+        star.y = ((star.y % H) + H) % H;
       }
     }
 
     this.drawNebula(ufo.glowPhase, W, H);
     this.drawStars(W, H);
+    this.drawShootingStars(dt, W, H);
 
     const speed = Math.hypot(ufo.vx, ufo.vy);
     if (speed > 140) {
@@ -160,9 +179,38 @@ export class Environment implements GameSystem {
         const tw = 0.55 + 0.45 * Math.sin(star.twk);
         const alpha = layer.alpha * tw;
         const size = layer.sz * tw;
-        g.circle(star.x, star.y, size).fill({ color: 0xffffff, alpha });
+        g.circle(star.x, star.y, size).fill({ color: star.color, alpha });
       }
     }
+  }
+
+  private drawShootingStars(dt: number, W: number, H: number): void {
+    if (Math.random() < 0.003 * dt * 60) {
+      this.shootingStars.push({
+        x: Math.random() * W,
+        y: Math.random() * H * 0.4,
+        vx: 200 + Math.random() * 300,
+        vy: 50 + Math.random() * 100,
+        life: 1.2,
+        maxLife: 1.2,
+        len: 60 + Math.random() * 80,
+      });
+    }
+
+    const g = this.starsGfx;
+    for (const s of this.shootingStars) {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.life -= dt;
+      if (s.life <= 0) continue;
+      const ratio = s.life / s.maxLife;
+      const spd = Math.hypot(s.vx, s.vy);
+      const ex = s.x - (s.vx / spd) * s.len * ratio;
+      const ey = s.y - (s.vy / spd) * s.len * ratio;
+      g.moveTo(s.x, s.y).lineTo(ex, ey)
+        .stroke({ width: 1.5, color: 0xffffff, alpha: ratio * 0.9 });
+    }
+    this.shootingStars = this.shootingStars.filter(s => s.life > 0);
   }
 
   private drawSpeedLines(
@@ -199,4 +247,14 @@ export class Environment implements GameSystem {
        .stroke({ width: lineWidth, color, alpha });
     }
   }
+}
+
+function weightedChoice(items: number[], weights: number[]): number {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < items.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return items[i];
+  }
+  return items[items.length - 1];
 }

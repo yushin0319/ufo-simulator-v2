@@ -1,4 +1,4 @@
-import { Application, Graphics } from 'pixi.js';
+import { Application, Graphics, BlurFilter, Container } from 'pixi.js';
 import type { GameContext, GameSystem } from './types.ts';
 import { TRAIL_LEN } from './constants.ts';
 
@@ -10,11 +10,22 @@ interface TrailPoint {
 }
 
 export class Trail implements GameSystem {
-  private gfx: Graphics = new Graphics();
+  private glowContainer!: Container;
+  private glowGfx!: Graphics;
+  private coreGfx!: Graphics;
   private points: TrailPoint[] = [];
 
   init(app: Application): void {
-    app.stage.addChildAt(this.gfx, 0);
+    this.glowContainer = new Container();
+    this.glowContainer.blendMode = 'add';
+    this.glowContainer.filters = [new BlurFilter({ strength: 8, quality: 3 })];
+    this.glowGfx = new Graphics();
+    this.glowContainer.addChild(this.glowGfx);
+
+    this.coreGfx = new Graphics();
+
+    app.stage.addChildAt(this.glowContainer, 0);
+    app.stage.addChildAt(this.coreGfx, 1);
   }
 
   update(ctx: GameContext): void {
@@ -35,7 +46,8 @@ export class Trail implements GameSystem {
   }
 
   private draw(): void {
-    this.gfx.clear();
+    this.glowGfx.clear();
+    this.coreGfx.clear();
     const len = this.points.length;
     if (len < 2) return;
 
@@ -59,14 +71,19 @@ export class Trail implements GameSystem {
         light = 55 + t * 15;
       }
 
-      const alpha = t * 0.48;
-      const lineWidth = t * 4.5;
       const color = hslToHex(hue, sat, light);
 
-      this.gfx
+      // Glow layer: fat, colored, blurred
+      this.glowGfx
         .moveTo(prev.x, prev.y)
         .lineTo(pt.x, pt.y)
-        .stroke({ width: lineWidth, color, alpha, cap: 'round' });
+        .stroke({ width: t * 9.0, color, alpha: t * 0.3, cap: 'round' });
+
+      // Core layer: thin, white, sharp
+      this.coreGfx
+        .moveTo(prev.x, prev.y)
+        .lineTo(pt.x, pt.y)
+        .stroke({ width: t * 2.5, color: 0xffffff, alpha: t * 0.6, cap: 'round' });
     }
   }
 }

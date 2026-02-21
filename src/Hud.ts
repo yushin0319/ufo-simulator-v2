@@ -43,6 +43,10 @@ export class Hud implements GameSystem {
   private ctrlTexts: Text[] = [];
   private ctrlAlpha = 1.0;
 
+  // ワープフラッシュ
+  private warpFlashAlpha = 0;
+  private warpEdge: string | null = null;
+
   private readonly PAD = 22;
 
   init(app: Application): void {
@@ -99,6 +103,24 @@ export class Hud implements GameSystem {
       const color = ctx.boost.isBoosting ? 0xff8800 : 0x0088ff;
       this.flashGfx.rect(0, 0, W, H);
       this.flashGfx.fill({ color, alpha: ctx.boost.flashAlpha * 0.55 });
+    }
+
+    // ---- ワープフラッシュ（エッジストリップ）----
+    if (ctx.wrapEdge) {
+      this.warpFlashAlpha = 0.6;
+      this.warpEdge = ctx.wrapEdge;
+    }
+    this.warpFlashAlpha = Math.max(0, this.warpFlashAlpha - dt * 3);
+    if (this.warpFlashAlpha > 0) {
+      const stripW = 40;
+      const warpColor = 0x88ddff;
+      const warpAlpha = this.warpFlashAlpha * 0.7;
+      switch (this.warpEdge) {
+        case 'right':  this.flashGfx.rect(W - stripW, 0, stripW, H).fill({ color: warpColor, alpha: warpAlpha }); break;
+        case 'left':   this.flashGfx.rect(0, 0, stripW, H).fill({ color: warpColor, alpha: warpAlpha }); break;
+        case 'top':    this.flashGfx.rect(0, 0, W, stripW).fill({ color: warpColor, alpha: warpAlpha }); break;
+        case 'bottom': this.flashGfx.rect(0, H - stripW, W, stripW).fill({ color: warpColor, alpha: warpAlpha }); break;
+      }
     }
 
     // ---- コントロールオーバーレイ フェードアウト ----
