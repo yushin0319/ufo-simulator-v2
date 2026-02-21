@@ -1,0 +1,10 @@
+export const ACCEL = 540;
+export const MAX_SPEED = 440;
+export const BOOST_MULT = 2.6;
+export const FRICTION = 0.970;
+export const BOOST_DRAIN = 1.15;
+export const BOOST_REGEN = 0.42;
+export const TRAIL_LEN = 55;
+export const POOL_SIZE = 700;
+export const UFO_RX = 44;
+export const UFO_RY = 13;
