@@ -1,8 +1,12 @@
 import type { InputState } from './types.js';
 
 const PREVENT_KEYS = new Set([
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-  'Space', ' ',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'Space',
+  ' ',
 ]);
 
 export class InputManager {

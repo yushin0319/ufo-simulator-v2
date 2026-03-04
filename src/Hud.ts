@@ -1,6 +1,12 @@
-import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { GameContext, GameSystem } from './types';
+import {
+  type Application,
+  Container,
+  Graphics,
+  Text,
+  TextStyle,
+} from 'pixi.js';
 import { MAX_SPEED } from './constants';
+import type { GameContext, GameSystem } from './types';
 
 export class Hud implements GameSystem {
   // z-order: hudContainer → flashGfx (最前面)
@@ -14,29 +20,57 @@ export class Hud implements GameSystem {
   // 永続 Text (text プロパティのみ更新)
   private speedText = new Text({
     text: 'SPEED     0',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 11, fontWeight: 'bold', fill: '#88c8ff' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 11,
+      fontWeight: 'bold',
+      fill: '#88c8ff',
+    }),
   });
   // ブーストラベルは色が変わるため 3 種類用意して visible 切り替え
   private boostTextLow = new Text({
     text: '',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 11, fontWeight: 'bold', fill: '#ff6655' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 11,
+      fontWeight: 'bold',
+      fill: '#ff6655',
+    }),
   });
   private boostTextMid = new Text({
     text: '',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 11, fontWeight: 'bold', fill: '#ffaa44' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 11,
+      fontWeight: 'bold',
+      fill: '#ffaa44',
+    }),
   });
   private boostTextHigh = new Text({
     text: '',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 11, fontWeight: 'bold', fill: '#44ffaa' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 11,
+      fontWeight: 'bold',
+      fill: '#44ffaa',
+    }),
   });
 
   private boostingText = new Text({
     text: '◀ BOOSTING',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 10, fill: '#ffcc44' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 10,
+      fill: '#ffcc44',
+    }),
   });
   private rechargingText = new Text({
     text: 'RECHARGING',
-    style: new TextStyle({ fontFamily: 'monospace', fontSize: 10, fill: '#ff6655' }),
+    style: new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: 10,
+      fill: '#ff6655',
+    }),
   });
 
   // コントロールオーバーレイ用テキスト群
@@ -51,13 +85,18 @@ export class Hud implements GameSystem {
 
   init(app: Application): void {
     // コントロールオーバーレイ テキスト定義
-    const ctrlItems: Array<{ text: string; fill: string; fontSize: number; bold?: boolean }> = [
-      { text: '── CONTROLS ──',         fill: '#88ccff', fontSize: 12, bold: true },
-      { text: 'WASD / ↑↓←→   Move',    fill: '#aaddff', fontSize: 11 },
-      { text: 'SHIFT / SPACE   Boost',  fill: '#aaddff', fontSize: 11 },
-      { text: 'Screen wraps at edges',  fill: '#557799', fontSize: 10 },
+    const ctrlItems: Array<{
+      text: string;
+      fill: string;
+      fontSize: number;
+      bold?: boolean;
+    }> = [
+      { text: '── CONTROLS ──', fill: '#88ccff', fontSize: 12, bold: true },
+      { text: 'WASD / ↑↓←→   Move', fill: '#aaddff', fontSize: 11 },
+      { text: 'SHIFT / SPACE   Boost', fill: '#aaddff', fontSize: 11 },
+      { text: 'Screen wraps at edges', fill: '#557799', fontSize: 10 },
       { text: 'Stars move with parallax', fill: '#557799', fontSize: 10 },
-      { text: 'Fly, UFO!',              fill: '#44aaee', fontSize: 11, bold: true },
+      { text: 'Fly, UFO!', fill: '#44aaee', fontSize: 11, bold: true },
     ];
     for (const item of ctrlItems) {
       const t = new Text({
@@ -116,10 +155,26 @@ export class Hud implements GameSystem {
       const warpColor = 0x88ddff;
       const warpAlpha = this.warpFlashAlpha * 0.7;
       switch (this.warpEdge) {
-        case 'right':  this.flashGfx.rect(W - stripW, 0, stripW, H).fill({ color: warpColor, alpha: warpAlpha }); break;
-        case 'left':   this.flashGfx.rect(0, 0, stripW, H).fill({ color: warpColor, alpha: warpAlpha }); break;
-        case 'top':    this.flashGfx.rect(0, 0, W, stripW).fill({ color: warpColor, alpha: warpAlpha }); break;
-        case 'bottom': this.flashGfx.rect(0, H - stripW, W, stripW).fill({ color: warpColor, alpha: warpAlpha }); break;
+        case 'right':
+          this.flashGfx
+            .rect(W - stripW, 0, stripW, H)
+            .fill({ color: warpColor, alpha: warpAlpha });
+          break;
+        case 'left':
+          this.flashGfx
+            .rect(0, 0, stripW, H)
+            .fill({ color: warpColor, alpha: warpAlpha });
+          break;
+        case 'top':
+          this.flashGfx
+            .rect(0, 0, W, stripW)
+            .fill({ color: warpColor, alpha: warpAlpha });
+          break;
+        case 'bottom':
+          this.flashGfx
+            .rect(0, H - stripW, W, stripW)
+            .fill({ color: warpColor, alpha: warpAlpha });
+          break;
       }
     }
 
@@ -137,17 +192,17 @@ export class Hud implements GameSystem {
 
     // ---- ブーストラベル (色別テキスト切り替え) ----
     const boostLabel = `BOOST  ${String(Math.floor(meter * 100)).padStart(3, ' ')}%`;
-    this.boostTextLow.text  = boostLabel;
-    this.boostTextMid.text  = boostLabel;
+    this.boostTextLow.text = boostLabel;
+    this.boostTextMid.text = boostLabel;
     this.boostTextHigh.text = boostLabel;
-    const meterLow  = meter < 0.2;
-    const meterMid  = meter >= 0.2 && meter < 0.5;
-    this.boostTextLow.visible  = meterLow;
-    this.boostTextMid.visible  = meterMid;
+    const meterLow = meter < 0.2;
+    const meterMid = meter >= 0.2 && meter < 0.5;
+    this.boostTextLow.visible = meterLow;
+    this.boostTextMid.visible = meterMid;
     this.boostTextHigh.visible = !meterLow && !meterMid;
 
     // ---- オプションテキスト表示切り替え ----
-    this.boostingText.visible   = ctx.boost.isBoosting;
+    this.boostingText.visible = ctx.boost.isBoosting;
     this.rechargingText.visible = !ctx.boost.isBoosting && meterLow;
 
     // ---- レイアウト計算 ----
@@ -155,19 +210,23 @@ export class Hud implements GameSystem {
     const panelY = H - 82;
     const panelW = 210;
     const panelH = 72;
-    const barX   = panelX + 10;
-    const barW   = 165;
-    const barH   = 9;
+    const barX = panelX + 10;
+    const barW = 165;
+    const barH = 9;
     const speedBarLabelY = panelY + 12;
-    const speedBarY      = speedBarLabelY + 14;
+    const speedBarY = speedBarLabelY + 14;
     const boostBarLabelY = speedBarLabelY + 24 + barH;
-    const boostBarY      = boostBarLabelY + 14;
+    const boostBarY = boostBarLabelY + 14;
 
     // テキスト位置
     this.speedText.x = barX;
     this.speedText.y = speedBarLabelY;
 
-    for (const t of [this.boostTextLow, this.boostTextMid, this.boostTextHigh]) {
+    for (const t of [
+      this.boostTextLow,
+      this.boostTextMid,
+      this.boostTextHigh,
+    ]) {
       t.x = barX;
       t.y = boostBarLabelY;
     }
@@ -190,9 +249,11 @@ export class Hud implements GameSystem {
     // スピードバー fill
     if (speedRatio > 0) {
       let speedColor: number;
-      if (speedRatio > 0.78)      speedColor = 0xff3300; // hue=20 オレンジ赤
-      else if (speedRatio > 0.45) speedColor = 0xffcc00; // hue=50 黄
-      else                        speedColor = 0x0088ff; // hue=200 青
+      if (speedRatio > 0.78)
+        speedColor = 0xff3300; // hue=20 オレンジ赤
+      else if (speedRatio > 0.45)
+        speedColor = 0xffcc00; // hue=50 黄
+      else speedColor = 0x0088ff; // hue=200 青
       this.barsGfx.roundRect(barX, speedBarY, barW * speedRatio, barH, 3);
       this.barsGfx.fill({ color: speedColor, alpha: 1 });
     }
@@ -204,9 +265,11 @@ export class Hud implements GameSystem {
     // ブーストバー fill
     if (meter > 0) {
       let boostBarColor: number;
-      if (meter < 0.2)      boostBarColor = 0xff2200; // hue=0
-      else if (meter < 0.5) boostBarColor = 0xff8800; // hue=35
-      else                  boostBarColor = 0x00cc66; // hue=148
+      if (meter < 0.2)
+        boostBarColor = 0xff2200; // hue=0
+      else if (meter < 0.5)
+        boostBarColor = 0xff8800; // hue=35
+      else boostBarColor = 0x00cc66; // hue=148
       this.barsGfx.roundRect(barX, boostBarY, barW * meter, barH, 3);
       this.barsGfx.fill({ color: boostBarColor, alpha: 1 });
     }
@@ -237,7 +300,9 @@ export class Hud implements GameSystem {
         t.visible = true;
       });
     } else {
-      this.ctrlTexts.forEach(t => { t.visible = false; });
+      this.ctrlTexts.forEach((t) => {
+        t.visible = false;
+      });
     }
   }
 

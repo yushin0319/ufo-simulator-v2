@@ -1,6 +1,6 @@
 import type { Application } from 'pixi.js';
-import type { GameContext, GameSystem } from './types';
 import { MAX_SPEED } from './constants';
+import type { GameContext, GameSystem } from './types';
 
 export class SoundManager implements GameSystem {
   private audioCtx: AudioContext | null = null;
@@ -113,19 +113,25 @@ export class SoundManager implements GameSystem {
 
     // Engine hum - ピッチとゲインを速度に連動
     if (this.engineOsc && this.engineGain && this.engineFilter) {
-      this.engineOsc.frequency.value = this.BASE_FREQ + (speed / MAX_SPEED) * 80;
+      this.engineOsc.frequency.value =
+        this.BASE_FREQ + (speed / MAX_SPEED) * 80;
       this.engineGain.gain.value = Math.min(0.15, speed / (MAX_SPEED * 2));
       this.engineFilter.frequency.value = 400 + (speed / MAX_SPEED) * 400;
     }
 
     // Boost jet - 状態変化でフェードイン/アウト + ピッチスイープ
     const nowBoosting = ctx.boost.isBoosting;
-    if (nowBoosting !== this.prevBoosting && this.jetGain && this.jetOsc && this.audioCtx) {
+    if (
+      nowBoosting !== this.prevBoosting &&
+      this.jetGain &&
+      this.jetOsc &&
+      this.audioCtx
+    ) {
       const t = this.audioCtx.currentTime;
       this.jetGain.gain.cancelScheduledValues(t);
       this.jetGain.gain.setValueAtTime(this.jetGain.gain.value, t);
       if (nowBoosting) {
-        this.jetGain.gain.linearRampToValueAtTime(0.10, t + 0.15);
+        this.jetGain.gain.linearRampToValueAtTime(0.1, t + 0.15);
         // ブースト再開: 周波数を50Hzにリセット
         this.jetOsc.frequency.cancelScheduledValues(t);
         this.jetOsc.frequency.setValueAtTime(50, t);
@@ -142,7 +148,7 @@ export class SoundManager implements GameSystem {
     if (this.ambientOscs.length > 0 && this.lfoGain && this.audioCtx) {
       const t = this.audioCtx.currentTime;
       const speedRatio = Math.min(1, speed / MAX_SPEED);
-      const detuneAmt = speedRatio > 0.7 ? (speedRatio - 0.7) / 0.3 * 12 : 0;
+      const detuneAmt = speedRatio > 0.7 ? ((speedRatio - 0.7) / 0.3) * 12 : 0;
       this.ambientOscs.forEach((osc, i) => {
         const sign = i % 2 === 0 ? 1 : -1;
         osc.detune.setTargetAtTime(sign * detuneAmt, t, 0.5);
@@ -174,7 +180,10 @@ export class SoundManager implements GameSystem {
     return curve;
   }
 
-  private createNoiseBuffer(ctx: AudioContext, durationSec: number): AudioBuffer {
+  private createNoiseBuffer(
+    ctx: AudioContext,
+    durationSec: number,
+  ): AudioBuffer {
     const sampleRate = ctx.sampleRate;
     const frameCount = Math.floor(sampleRate * durationSec);
     const buffer = ctx.createBuffer(1, frameCount, sampleRate);

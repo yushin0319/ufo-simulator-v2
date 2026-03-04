@@ -1,16 +1,20 @@
 import { Application } from 'pixi.js';
-import type { GameContext, GameSystem, UfoState, BoostState } from './types.js';
-import { InputManager } from './input.js';
 import {
-  ACCEL, MAX_SPEED, BOOST_MULT, FRICTION,
-  BOOST_DRAIN, BOOST_REGEN,
+  ACCEL,
+  BOOST_DRAIN,
+  BOOST_MULT,
+  BOOST_REGEN,
+  FRICTION,
+  MAX_SPEED,
 } from './constants.js';
 import { Environment } from './Environment.js';
-import { Particles } from './Particles.js';
-import { Ufo } from './Ufo.js';
-import { Trail } from './Trail.js';
-import { SoundManager } from './Sound.js';
 import { Hud } from './Hud.js';
+import { InputManager } from './input.js';
+import { Particles } from './Particles.js';
+import { SoundManager } from './Sound.js';
+import { Trail } from './Trail.js';
+import type { BoostState, GameContext, GameSystem, UfoState } from './types.js';
+import { Ufo } from './Ufo.js';
 
 async function main() {
   const app = new Application();
@@ -96,10 +100,10 @@ async function main() {
     const speedMult = boost.isBoosting ? BOOST_MULT : 1;
     const accel = ACCEL * speedMult * dt;
 
-    if (inputState.left)  ufo.vx -= accel;
+    if (inputState.left) ufo.vx -= accel;
     if (inputState.right) ufo.vx += accel;
-    if (inputState.up)    ufo.vy -= accel;
-    if (inputState.down)  ufo.vy += accel;
+    if (inputState.up) ufo.vy -= accel;
+    if (inputState.down) ufo.vy += accel;
 
     // --- Speed cap ---
     const maxSpeed = MAX_SPEED * speedMult;
@@ -112,7 +116,7 @@ async function main() {
 
     // --- Friction ---
     const frictionBase = boost.isBoosting ? 0.983 : FRICTION;
-    const frictionFactor = Math.pow(frictionBase, dt * 60);
+    const frictionFactor = frictionBase ** (dt * 60);
     ufo.vx *= frictionFactor;
     ufo.vy *= frictionFactor;
 
@@ -124,8 +128,14 @@ async function main() {
     const margin = 60;
     const prevX = ufo.x;
     const prevY = ufo.y;
-    ufo.x = ((ufo.x + margin) % (width + margin * 2) + (width + margin * 2)) % (width + margin * 2) - margin;
-    ufo.y = ((ufo.y + margin) % (height + margin * 2) + (height + margin * 2)) % (height + margin * 2) - margin;
+    ufo.x =
+      ((((ufo.x + margin) % (width + margin * 2)) + (width + margin * 2)) %
+        (width + margin * 2)) -
+      margin;
+    ufo.y =
+      ((((ufo.y + margin) % (height + margin * 2)) + (height + margin * 2)) %
+        (height + margin * 2)) -
+      margin;
 
     // --- Wrap edge detection ---
     let wrapEdge: 'left' | 'right' | 'top' | 'bottom' | null = null;
@@ -171,7 +181,8 @@ async function main() {
     if (boost.isBoosting) {
       shakeIntensity = 2.5;
     } else {
-      shakeIntensity = Math.max(0, (currentSpeed - MAX_SPEED * 0.8) / (MAX_SPEED * 0.2)) * 1.5;
+      shakeIntensity =
+        Math.max(0, (currentSpeed - MAX_SPEED * 0.8) / (MAX_SPEED * 0.2)) * 1.5;
     }
     if (shakeIntensity > 0) {
       app.stage.x = (Math.random() - 0.5) * 2 * shakeIntensity;

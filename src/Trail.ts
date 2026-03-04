@@ -1,6 +1,6 @@
-import { Application, Graphics, BlurFilter, Container } from 'pixi.js';
-import type { GameContext, GameSystem } from './types.ts';
+import { type Application, BlurFilter, Container, Graphics } from 'pixi.js';
 import { TRAIL_LEN } from './constants.ts';
+import type { GameContext, GameSystem } from './types.ts';
 
 interface TrailPoint {
   x: number;
@@ -83,7 +83,12 @@ export class Trail implements GameSystem {
       this.coreGfx
         .moveTo(prev.x, prev.y)
         .lineTo(pt.x, pt.y)
-        .stroke({ width: t * 2.5, color: 0xffffff, alpha: t * 0.6, cap: 'round' });
+        .stroke({
+          width: t * 2.5,
+          color: 0xffffff,
+          alpha: t * 0.6,
+          cap: 'round',
+        });
     }
   }
 }

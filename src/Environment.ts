@@ -1,6 +1,6 @@
-import { Application, Graphics, FillGradient } from 'pixi.js';
+import { type Application, Graphics } from 'pixi.js';
+import { BOOST_MULT, MAX_SPEED } from './constants.ts';
 import type { GameContext, GameSystem } from './types.ts';
-import { MAX_SPEED, BOOST_MULT } from './constants.ts';
 
 interface StarLayer {
   n: number;
@@ -12,8 +12,8 @@ interface StarLayer {
 interface Star {
   x: number;
   y: number;
-  twk: number;   // twinkle phase
-  tsp: number;   // twinkle speed (0.6 - 2.6)
+  twk: number; // twinkle phase
+  tsp: number; // twinkle speed (0.6 - 2.6)
   color: number; // star color temperature
 }
 
@@ -32,8 +32,8 @@ const STAR_WEIGHTS = [0.08, 0.12, 0.5, 0.18, 0.12];
 
 const LAYERS: StarLayer[] = [
   { n: 260, spd: 0.055, sz: 0.85, alpha: 0.35 },
-  { n: 180, spd: 0.13,  sz: 1.40, alpha: 0.62 },
-  { n: 90,  spd: 0.26,  sz: 2.30, alpha: 0.92 },
+  { n: 180, spd: 0.13, sz: 1.4, alpha: 0.62 },
+  { n: 90, spd: 0.26, sz: 2.3, alpha: 0.92 },
 ];
 
 export class Environment implements GameSystem {
@@ -42,8 +42,14 @@ export class Environment implements GameSystem {
   private vignetteGfx!: Graphics;
   private speedGfx!: Graphics;
 
-  private stars: Star[][] = LAYERS.map(l =>
-    Array.from({ length: l.n }, () => ({ x: 0, y: 0, twk: 0, tsp: 1, color: 0xffffff }))
+  private stars: Star[][] = LAYERS.map((l) =>
+    Array.from({ length: l.n }, () => ({
+      x: 0,
+      y: 0,
+      twk: 0,
+      tsp: 1,
+      color: 0xffffff,
+    })),
   );
   private shootingStars: ShootingStar[] = [];
 
@@ -104,11 +110,11 @@ export class Environment implements GameSystem {
     for (let i = 0; i < BANDS; i++) {
       const t = (BANDS - i) / BANDS; // 1=outermost, 1/BANDS=innermost
       const a = 0.11 * t;
-      const bx = W * 0.30 * t;
-      const by = H * 0.30 * t;
-      g.rect(0, 0, bx, H).fill({ color: col, alpha: a });             // Left
-      g.rect(W - bx, 0, bx, H).fill({ color: col, alpha: a });        // Right
-      g.rect(bx, 0, W - 2 * bx, by).fill({ color: col, alpha: a });   // Top
+      const bx = W * 0.3 * t;
+      const by = H * 0.3 * t;
+      g.rect(0, 0, bx, H).fill({ color: col, alpha: a }); // Left
+      g.rect(W - bx, 0, bx, H).fill({ color: col, alpha: a }); // Right
+      g.rect(bx, 0, W - 2 * bx, by).fill({ color: col, alpha: a }); // Top
       g.rect(bx, H - by, W - 2 * bx, by).fill({ color: col, alpha: a }); // Bottom
     }
   }
@@ -154,22 +160,26 @@ export class Environment implements GameSystem {
     const b1r = W * 0.52;
     for (let i = 0; i < 5; i++) {
       const t = (i + 1) / 5;
-      g.ellipse(b1x, b1y, b1r * t, b1r * t * 0.65)
-       .fill({ color: 0x6600bb, alpha: 0.035 * (1 - t * 0.5) });
+      g.ellipse(b1x, b1y, b1r * t, b1r * t * 0.65).fill({
+        color: 0x6600bb,
+        alpha: 0.035 * (1 - t * 0.5),
+      });
     }
 
     // Blob 2 - blue
     const b2x = W * (0.73 + 0.03 * Math.cos(nb * 0.55));
-    const b2y = H * (0.58 + 0.03 * Math.sin(nb * 0.80));
+    const b2y = H * (0.58 + 0.03 * Math.sin(nb * 0.8));
     const b2r = W * 0.44;
     for (let i = 0; i < 5; i++) {
       const t = (i + 1) / 5;
-      g.ellipse(b2x, b2y, b2r * t, b2r * t * 0.65)
-       .fill({ color: 0x0033cc, alpha: 0.035 * (1 - t * 0.5) });
+      g.ellipse(b2x, b2y, b2r * t, b2r * t * 0.65).fill({
+        color: 0x0033cc,
+        alpha: 0.035 * (1 - t * 0.5),
+      });
     }
   }
 
-  private drawStars(W: number, H: number): void {
+  private drawStars(_W: number, _H: number): void {
     const g = this.starsGfx;
     g.clear();
     for (let li = 0; li < LAYERS.length; li++) {
@@ -207,18 +217,19 @@ export class Environment implements GameSystem {
       const spd = Math.hypot(s.vx, s.vy);
       const ex = s.x - (s.vx / spd) * s.len * ratio;
       const ey = s.y - (s.vy / spd) * s.len * ratio;
-      g.moveTo(s.x, s.y).lineTo(ex, ey)
+      g.moveTo(s.x, s.y)
+        .lineTo(ex, ey)
         .stroke({ width: 1.5, color: 0xffffff, alpha: ratio * 0.9 });
     }
-    this.shootingStars = this.shootingStars.filter(s => s.life > 0);
+    this.shootingStars = this.shootingStars.filter((s) => s.life > 0);
   }
 
   private drawSpeedLines(
     ufo: { x: number; y: number; vx: number; vy: number },
     isBoosting: boolean,
     speed: number,
-    W: number,
-    H: number,
+    _W: number,
+    _H: number,
   ): void {
     const g = this.speedGfx;
     g.clear();
@@ -227,7 +238,7 @@ export class Environment implements GameSystem {
     const count = Math.floor(t * 28);
     const len = 65 + t * 130;
     const spread = 170 + t * 220;
-    const alpha = t * 0.30;
+    const alpha = t * 0.3;
     const color = isBoosting ? 0xffaa33 : 0x66ccff;
 
     // Direction: opposite of UFO movement
@@ -243,8 +254,8 @@ export class Environment implements GameSystem {
       const sy = ufo.y + py * offset;
       const lineWidth = 0.5 + Math.random();
       g.moveTo(sx, sy)
-       .lineTo(sx + dx * len, sy + dy * len)
-       .stroke({ width: lineWidth, color, alpha });
+        .lineTo(sx + dx * len, sy + dy * len)
+        .stroke({ width: lineWidth, color, alpha });
     }
   }
 }
