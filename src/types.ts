@@ -1,8 +1,10 @@
-import { Application } from 'pixi.js';
+import type { Application } from 'pixi.js';
 
 export interface UfoState {
-  x: number; y: number;
-  vx: number; vy: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   tilt: number;
   bob: number;
   glowPhase: number;

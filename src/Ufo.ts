@@ -1,6 +1,12 @@
-import { Application, Container, Graphics, FillGradient, BlurFilter } from 'pixi.js';
-import type { GameContext, GameSystem } from './types.ts';
+import {
+  type Application,
+  BlurFilter,
+  Container,
+  FillGradient,
+  Graphics,
+} from 'pixi.js';
 import { UFO_RX, UFO_RY } from './constants.ts';
+import type { GameContext, GameSystem } from './types.ts';
 
 export class Ufo implements GameSystem {
   private container: Container = new Container();
@@ -87,18 +93,24 @@ export class Ufo implements GameSystem {
   //    （旧 drawOuterGlow + drawEngineGlow を統合）
   private drawGlowLayer(gw: number, boosting: boolean): void {
     // UFO本体シアングロー（BlurFilter が広げるので単純な楕円1つでOK）
-    this.glowGfx.ellipse(0, 0, UFO_RX * 0.9, UFO_RY * 0.9)
+    this.glowGfx
+      .ellipse(0, 0, UFO_RX * 0.9, UFO_RY * 0.9)
       .fill({ color: 0x00e5ff, alpha: 0.55 * gw });
 
     // エンジン下部グロー
     const engColor = boosting ? 0xff6600 : 0x0088ff;
-    this.glowGfx.ellipse(0, UFO_RY + 4, 22, 15)
+    this.glowGfx
+      .ellipse(0, UFO_RY + 4, 22, 15)
       .fill({ color: engColor, alpha: 0.7 * gw });
   }
 
   // 2. メインディスク (FillGradient 線形グラデーション)
   private drawMainDisk(gw: number): void {
-    const grad = new FillGradient({ type: 'linear', start: { x: 0, y: -UFO_RY }, end: { x: 0, y: UFO_RY } });
+    const grad = new FillGradient({
+      type: 'linear',
+      start: { x: 0, y: -UFO_RY },
+      end: { x: 0, y: UFO_RY },
+    });
     grad.addColorStop(0, 0x4a5f90);
     grad.addColorStop(0.35, 0x6888c0);
     grad.addColorStop(0.7, 0x3a5080);
@@ -107,17 +119,40 @@ export class Ufo implements GameSystem {
     this.gfx.ellipse(0, 0, UFO_RX, UFO_RY).fill({ fill: grad });
 
     // ストローク: シアン系、glowPhase連動alpha
-    this.gfx.ellipse(0, 0, UFO_RX, UFO_RY)
+    this.gfx
+      .ellipse(0, 0, UFO_RX, UFO_RY)
       .stroke({ width: 1.2, color: 0x00e5ff, alpha: 0.4 + 0.4 * gw });
   }
 
   // 3. パネルアークライン (3本の装飾的ベジエ曲線)
   private drawPanelArcs(): void {
-    const rx = UFO_RX, ry = UFO_RY;
+    const rx = UFO_RX,
+      ry = UFO_RY;
     const arcs = [
-      { sx: -rx * 0.7, sy: -ry * 0.2, cx: 0, cy: -ry * 0.6, ex: rx * 0.7, ey: -ry * 0.2 },
-      { sx: -rx * 0.5, sy: ry * 0.1, cx: 0, cy: -ry * 0.3, ex: rx * 0.5, ey: ry * 0.1 },
-      { sx: -rx * 0.3, sy: ry * 0.3, cx: 0, cy: ry * 0.0, ex: rx * 0.3, ey: ry * 0.3 },
+      {
+        sx: -rx * 0.7,
+        sy: -ry * 0.2,
+        cx: 0,
+        cy: -ry * 0.6,
+        ex: rx * 0.7,
+        ey: -ry * 0.2,
+      },
+      {
+        sx: -rx * 0.5,
+        sy: ry * 0.1,
+        cx: 0,
+        cy: -ry * 0.3,
+        ex: rx * 0.5,
+        ey: ry * 0.1,
+      },
+      {
+        sx: -rx * 0.3,
+        sy: ry * 0.3,
+        cx: 0,
+        cy: ry * 0.0,
+        ex: rx * 0.3,
+        ey: ry * 0.3,
+      },
     ];
     for (const a of arcs) {
       this.gfx
@@ -130,7 +165,8 @@ export class Ufo implements GameSystem {
   // 4. リムライト (12個、rimPhase連動) - rimGfx に描画（additive blend）
   private drawRimLights(rimPhase: number, boosting: boolean): void {
     const count = 12;
-    const rx = UFO_RX, ry = UFO_RY;
+    const rx = UFO_RX,
+      ry = UFO_RY;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + rimPhase;
       const lx = Math.cos(angle) * rx * 0.88;
@@ -160,7 +196,8 @@ export class Ufo implements GameSystem {
       const ratio = i / steps;
       const baseColor = lerpColor(0x1a3a6a, 0x6aacee, 1 - ratio);
       const alpha = 0.55 + 0.3 * (1 - ratio);
-      this.gfx.ellipse(0, -UFO_RY * 0.3, domeRX * ratio, domeRY * ratio * 0.5)
+      this.gfx
+        .ellipse(0, -UFO_RY * 0.3, domeRX * ratio, domeRY * ratio * 0.5)
         .fill({ color: baseColor, alpha });
     }
 
@@ -168,12 +205,19 @@ export class Ufo implements GameSystem {
     const specSteps = 4;
     for (let i = specSteps; i >= 1; i--) {
       const ratio = i / specSteps;
-      this.gfx.ellipse(-domeRX * 0.2, -UFO_RY * 0.9, domeRX * 0.35 * ratio, domeRY * 0.12 * ratio)
+      this.gfx
+        .ellipse(
+          -domeRX * 0.2,
+          -UFO_RY * 0.9,
+          domeRX * 0.35 * ratio,
+          domeRY * 0.12 * ratio,
+        )
         .fill({ color: 0xffffff, alpha: 0.12 * (1 - ratio) + 0.04 });
     }
 
     // ドームアウトライン
-    this.gfx.ellipse(0, -UFO_RY * 0.3, domeRX, domeRY * 0.5)
+    this.gfx
+      .ellipse(0, -UFO_RY * 0.3, domeRX, domeRY * 0.5)
       .stroke({ width: 1.0, color: 0x00e5ff, alpha: 0.3 + 0.3 * gw });
   }
 
@@ -184,11 +228,14 @@ export class Ufo implements GameSystem {
     for (let i = steps; i >= 1; i--) {
       const ratio = i / steps;
       const alpha = (1 - ratio) * 0.6 * gw;
-      this.gfx.circle(0, UFO_RY * 0.5, radius * ratio)
+      this.gfx
+        .circle(0, UFO_RY * 0.5, radius * ratio)
         .fill({ color: 0x44ddff, alpha });
     }
     // コア
-    this.gfx.circle(0, UFO_RY * 0.5, 3).fill({ color: 0xffffff, alpha: 0.8 * gw });
+    this.gfx
+      .circle(0, UFO_RY * 0.5, 3)
+      .fill({ color: 0xffffff, alpha: 0.8 * gw });
   }
 }
 
@@ -207,8 +254,12 @@ function hslToHex(h: number, s: number, l: number): number {
 
 // 2色の線形補間 (0xRRGGBB)
 function lerpColor(c1: number, c2: number, t: number): number {
-  const r1 = (c1 >> 16) & 0xff, g1 = (c1 >> 8) & 0xff, b1 = c1 & 0xff;
-  const r2 = (c2 >> 16) & 0xff, g2 = (c2 >> 8) & 0xff, b2 = c2 & 0xff;
+  const r1 = (c1 >> 16) & 0xff,
+    g1 = (c1 >> 8) & 0xff,
+    b1 = c1 & 0xff;
+  const r2 = (c2 >> 16) & 0xff,
+    g2 = (c2 >> 8) & 0xff,
+    b2 = c2 & 0xff;
   const r = Math.round(r1 + (r2 - r1) * t);
   const g = Math.round(g1 + (g2 - g1) * t);
   const b = Math.round(b1 + (b2 - b1) * t);

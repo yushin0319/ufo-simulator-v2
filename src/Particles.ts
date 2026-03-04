@@ -1,6 +1,6 @@
-import { Application, Graphics } from 'pixi.js';
-import type { GameContext, GameSystem } from './types.ts';
+import { type Application, Graphics } from 'pixi.js';
 import { POOL_SIZE, UFO_RX, UFO_RY } from './constants.ts';
+import type { GameContext, GameSystem } from './types.ts';
 
 interface Particle {
   active: boolean;
@@ -22,8 +22,17 @@ export class Particles implements GameSystem {
 
   constructor() {
     this.pool = Array.from({ length: POOL_SIZE }, () => ({
-      active: false, x: 0, y: 0, vx: 0, vy: 0,
-      life: 0, maxLife: 1, size: 0, r: 0, g: 0, b: 0,
+      active: false,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      life: 0,
+      maxLife: 1,
+      size: 0,
+      r: 0,
+      g: 0,
+      b: 0,
     }));
   }
 
@@ -33,20 +42,30 @@ export class Particles implements GameSystem {
   }
 
   emit(
-    x: number, y: number,
-    vx: number, vy: number,
-    life: number, size: number,
-    r: number, g: number, b: number,
+    x: number,
+    y: number,
+    vx: number,
+    vy: number,
+    life: number,
+    size: number,
+    r: number,
+    g: number,
+    b: number,
   ): void {
     for (let i = 0; i < POOL_SIZE; i++) {
       const p = this.pool[i];
       if (!p.active) {
         p.active = true;
-        p.x = x;    p.y = y;
-        p.vx = vx;  p.vy = vy;
-        p.life = life; p.maxLife = life;
+        p.x = x;
+        p.y = y;
+        p.vx = vx;
+        p.vy = vy;
+        p.life = life;
+        p.maxLife = life;
         p.size = size;
-        p.r = r; p.g = g; p.b = b;
+        p.r = r;
+        p.g = g;
+        p.b = b;
         return;
       }
     }
@@ -63,7 +82,7 @@ export class Particles implements GameSystem {
       this.emitBoostStarburst(ufo);
     }
 
-    const drag = Math.pow(0.89, dt * 60);
+    const drag = 0.89 ** (dt * 60);
     const gfx = this.gfx;
     gfx.clear();
 
@@ -98,7 +117,8 @@ export class Particles implements GameSystem {
     speed: number,
     _dt: number,
   ): void {
-    const moving = input.up || input.down || input.left || input.right || speed > 25;
+    const moving =
+      input.up || input.down || input.left || input.right || speed > 25;
     if (!moving) return;
 
     const mag = Math.max(speed, 1);
@@ -108,29 +128,41 @@ export class Particles implements GameSystem {
     if (boost.isBoosting) {
       // 7 particles/frame, orange exhaust
       for (let i = 0; i < 7; i++) {
-        const life = 0.45 + Math.random() * 0.40;
+        const life = 0.45 + Math.random() * 0.4;
         const size = 3 + Math.random() * 5;
         const spd = 130 + Math.random() * 130;
         const vx = dirX * spd + (Math.random() - 0.5) * 1.3 * spd;
         const vy = dirY * spd + (Math.random() - 0.5) * 1.3 * spd;
         this.emit(
-          ufo.x + (Math.random() - 0.5) * 18, ufo.y + UFO_RY,
-          vx, vy, life, size,
-          255, Math.floor(70 + Math.random() * 130), Math.floor(Math.random() * 30),
+          ufo.x + (Math.random() - 0.5) * 18,
+          ufo.y + UFO_RY,
+          vx,
+          vy,
+          life,
+          size,
+          255,
+          Math.floor(70 + Math.random() * 130),
+          Math.floor(Math.random() * 30),
         );
       }
     } else {
       // 2 particles/frame, blue exhaust
       for (let i = 0; i < 2; i++) {
-        const life = 0.22 + Math.random() * 0.20;
+        const life = 0.22 + Math.random() * 0.2;
         const size = 1.5 + Math.random() * 2.5;
         const spd = 130 + Math.random() * 130;
         const vx = dirX * spd + (Math.random() - 0.5) * 0.75 * spd;
         const vy = dirY * spd + (Math.random() - 0.5) * 0.75 * spd;
         this.emit(
-          ufo.x + (Math.random() - 0.5) * 18, ufo.y + UFO_RY,
-          vx, vy, life, size,
-          Math.floor(70 + Math.random() * 80), Math.floor(160 + Math.random() * 70), 255,
+          ufo.x + (Math.random() - 0.5) * 18,
+          ufo.y + UFO_RY,
+          vx,
+          vy,
+          life,
+          size,
+          Math.floor(70 + Math.random() * 80),
+          Math.floor(160 + Math.random() * 70),
+          255,
         );
       }
     }
@@ -159,7 +191,17 @@ export class Particles implements GameSystem {
       const vy = Math.sin(angle) * spd;
       const life = 0.3 + Math.random() * 0.4;
       const size = 2 + Math.random() * 3;
-      this.emit(ufo.x, ufo.y, vx, vy, life, size, 255, Math.floor(190 + Math.random() * 65), 40);
+      this.emit(
+        ufo.x,
+        ufo.y,
+        vx,
+        vy,
+        life,
+        size,
+        255,
+        Math.floor(190 + Math.random() * 65),
+        40,
+      );
     }
   }
 }
