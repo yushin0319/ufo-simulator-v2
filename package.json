@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "pixi.js": "^8.0.0"
+    "pixi.js": "^8.17.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
