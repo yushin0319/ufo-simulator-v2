@@ -7,13 +7,20 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "npx @biomejs/biome check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "pixi.js": "^8.17.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.4.0",
     "vite": "^7.3.1"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx,css,json}": "biome check --write --no-errors-on-unmatched"
   }
 }
