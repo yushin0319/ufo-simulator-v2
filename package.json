@@ -14,7 +14,7 @@
     "pixi.js": "^8.17.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
+    "@biomejs/biome": "^2.4.9",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "typescript": "^5.4.0",
