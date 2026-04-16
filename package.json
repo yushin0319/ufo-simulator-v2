@@ -11,7 +11,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "pixi.js": "^8.17.1"
+    "pixi.js": "^8.18.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
