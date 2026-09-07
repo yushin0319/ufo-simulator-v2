@@ -4,7 +4,8 @@ Pixi.js を使った UFO フライトシミュレータ。物理演算（加速�
 
 ## スタック
 
-- TypeScript 6 / Vite 8
+- TypeScript 7 / Vite 8
+- パッケージマネージャ: Bun（`bun.lock` あり）
 - レンダリング: Pixi.js 8（WebGL）
 - Lint: Biome / Husky + lint-staged
 
