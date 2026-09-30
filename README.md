@@ -43,11 +43,16 @@ src/
 
 ```bash
 bun install
-bun run dev          # Vite
+bun run dev          # Vite（:3000、vite.config.ts の server.port）
 bun run build        # tsc + vite build
 bun run lint         # Biome
 ```
 
 ## デプロイ
 
-GitHub Pages（手動ビルド・デプロイ）。
+公開はしていない（GitHub Pages 無効、デプロイ用ワークフローも無い）。ローカルの `bun run dev` で確認する。
+
+## CI
+
+- `.github/workflows/ci.yml`（Biome / 型チェック / ビルド）
+- CodeQL: `codeql.yml` / PR レビュー: `gemini-review.yml` / Dependabot patch/minor は `dependabot-automerge.yml` で auto-merge
